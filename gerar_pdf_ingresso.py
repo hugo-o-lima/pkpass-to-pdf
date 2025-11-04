@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""
-Conversor de arquivos .pkpass (Apple Wallet) para PDF com QR Code.
-Autor: Hugo Antonio de Oliveira Lima
-GitHub: https://github.com/hugo-o-lima
-Licença: MIT
-"""
-
 import os
 import json
 import zipfile
@@ -16,8 +9,6 @@ from pathlib import Path
 
 
 def gerar_pdf(pass_json_path: Path, temp_dir: Path, output_pdf: Path, numero: int):
-    """Gera um PDF estilizado a partir do pass.json extraído de um arquivo .pkpass."""
-
     with open(pass_json_path, "r", encoding="utf-8") as f:
         dados = json.load(f)
 
@@ -25,44 +16,36 @@ def gerar_pdf(pass_json_path: Path, temp_dir: Path, output_pdf: Path, numero: in
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
 
-    # Adiciona fontes Unicode (necessárias para acentuação)
     pdf.add_font("DejaVu", "", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
     pdf.add_font("DejaVu", "B", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
     pdf.add_font("DejaVu", "I", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf")
 
-    # Fundo claro
     pdf.set_fill_color(245, 245, 245)
     pdf.rect(10, 10, 190, 277, "F")
 
-    # Logo do evento (se existir)
     logo_path = temp_dir / "logo.png"
     if logo_path.exists():
         pdf.image(str(logo_path), x=70, y=20, w=70)
     pdf.ln(60)
 
-    # Título
     pdf.set_font("DejaVu", "B", 18)
     titulo = dados.get("eventTicket", {}).get("primaryFields", [{}])[0].get("value", "Ingresso")
     pdf.multi_cell(180, 12, titulo, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(3)
 
-    # Descrição
     pdf.set_font("DejaVu", "", 11)
     descricao = dados.get("description", "")
     pdf.multi_cell(180, 8, descricao, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(10)
 
-    # Linha separadora
     pdf.set_draw_color(180, 180, 180)
     pdf.set_line_width(0.4)
     pdf.line(20, pdf.get_y(), 190, pdf.get_y())
     pdf.ln(6)
 
-    # Função auxiliar
     def add_info(label, value):
         pdf.multi_cell(180, 8, f"{label}: {value}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
-    # Detalhes do evento
     event = dados.get("eventTicket", {})
     pdf.set_font("DejaVu", "B", 14)
     pdf.cell(0, 10, "Detalhes do Evento", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
@@ -93,7 +76,6 @@ def gerar_pdf(pass_json_path: Path, temp_dir: Path, output_pdf: Path, numero: in
         pdf.set_font("DejaVu", "B", 12)
         pdf.multi_cell(180, 8, f"Número do Ingresso: {qr_info.get('altText', '-')}", align="C")
 
-    # Rodapé
     pdf.set_y(-20)
     pdf.set_font("DejaVu", "I", 9)
     pdf.multi_cell(
@@ -107,7 +89,6 @@ def gerar_pdf(pass_json_path: Path, temp_dir: Path, output_pdf: Path, numero: in
 
 
 def converter_todos(input_dir: Path, output_dir: Path):
-    """Procura todos os .pkpass em input_dir e converte para PDFs numerados."""
     pkpass_files = sorted(input_dir.glob("*.pkpass"))
     if not pkpass_files:
         print("⚠️ Nenhum arquivo .pkpass encontrado em:", input_dir)
